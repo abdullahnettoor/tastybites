@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:15
+    restart: always
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: tastybites
+      POSTGRES_PASSWORD: tastybitespass
+      POSTGRES_DB: tastybitesdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+      - ./db/migrations/000_create_tables.sql:/docker-entrypoint-initdb.d/000_create_tables.sql
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U tastybites -d tastybitesdb"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+
+volumes:
+  postgres_data:
