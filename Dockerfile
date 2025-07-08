@@ -1,5 +1,5 @@
 # Stage 1
-FROM golang:1.21.5-alpine3.19 AS builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
@@ -10,14 +10,18 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o tastybites-api ./...
+RUN CGO_ENABLED=0 GOOS=linux go build -o tastybites-api cmd/tastybites/main.go
 
 # Stage 2
 FROM alpine:3.19
 
 WORKDIR /app
 
+# Install curl for healthcheck
+RUN apk --no-cache add curl
+
 COPY --from=builder /app/tastybites-api .
+COPY --from=builder /app/.env .
 
 EXPOSE 8080
 
