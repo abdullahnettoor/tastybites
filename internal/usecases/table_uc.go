@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/abdullahnettoor/tastybites/internal/models"
 	"github.com/abdullahnettoor/tastybites/internal/repo/interfaces"
@@ -10,6 +11,8 @@ import (
 type TableIUsecase interface {
 	GetAllTables(ctx context.Context) ([]models.Table, error)
 	GetAvailableTables(ctx context.Context) ([]models.Table, error)
+	IsTableAvailable(ctx context.Context, tableID int) (bool, error)
+	ResetTableStatus(ctx context.Context, tableID int) error
 }
 
 type TableUsecase struct {
@@ -42,4 +45,31 @@ func (m *TableUsecase) GetAllTables(ctx context.Context) ([]models.Table, error)
 		return nil, models.ErrIsEmpty
 	}
 	return tables, nil
+}
+
+func (m *TableUsecase) IsTableAvailable(ctx context.Context, tableID int) (bool, error) {
+	table, err := m.repo.GetTableById(ctx, tableID)
+	if err != nil {
+		return false, err
+	}
+	return table.Status == models.TableStatusAvailable, nil
+}
+
+func (m *TableUsecase) ResetTableStatus(ctx context.Context, tableID int) error {
+	_, err := m.repo.GetTableById(ctx, tableID)
+	if err != nil {
+		return fmt.Errorf("table not found: %w", err)
+	}
+
+	err = m.repo.UpdateOrderStatusByTableId(ctx, tableID, models.OrderStatusCompleted)
+	if err != nil {
+		return fmt.Errorf("failed to complete orders for table: %w", err)
+	}
+
+	err = m.repo.ResetTableToAvailable(ctx, tableID)
+	if err != nil {
+		return fmt.Errorf("failed to reset table status: %w", err)
+	}
+
+	return nil
 }

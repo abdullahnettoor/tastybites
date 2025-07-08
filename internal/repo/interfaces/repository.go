@@ -30,8 +30,8 @@ type OrderRepository interface {
 	GetOrdersByUser(ctx context.Context, userId int) ([]models.Order, error)
 	UpdateOrder(ctx context.Context, order models.Order) error
 	DeleteOrder(ctx context.Context, id int) error
-
 	GetOrderByTableId(ctx context.Context, tableId int) (models.Order, error)
+	UpdateOrderStatusByTableId(ctx context.Context, tableId int, status models.OrderStatus) error
 }
 
 // MenuItemRepository defines menu item-related database operations.
@@ -52,4 +52,5 @@ type TableRepository interface {
 	DeleteTable(ctx context.Context, id int) error
 	GetAllTables(ctx context.Context) ([]models.Table, error)
 	GetTablesByStatus(ctx context.Context, status models.TableStatus) ([]models.Table, error)
+	ResetTableToAvailable(ctx context.Context, tableId int) error
 }

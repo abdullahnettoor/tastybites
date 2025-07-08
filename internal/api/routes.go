@@ -47,7 +47,7 @@ func (app *application) InitializeRoutes(
 	// Handlers
 	userHandler := handlers.NewUserHandler(userUsecase, tableUsecase)
 	menuHandler := handlers.NewMenuHandler(menuUsecase)
-	orderHandler := handlers.NewOrderHandler(orderUsecase, userUsecase)
+	orderHandler := handlers.NewOrderHandler(orderUsecase, userUsecase, tableUsecase)
 
 	// Public routes
 	publicGroup.HandleFunc("GET /ping", func(w http.ResponseWriter, r *http.Request) {
@@ -66,5 +66,6 @@ func (app *application) InitializeRoutes(
 	// Admin routes
 	adminGroup.HandleFunc("GET /admin/orders", orderHandler.AdminGetAllOrders)
 	adminGroup.HandleFunc("GET /admin/tables/", orderHandler.GetOrderByTableId)
+	adminGroup.HandleFunc("PATCH /admin/tables/{tableId}", orderHandler.UpdateTableStatus)
 
 }

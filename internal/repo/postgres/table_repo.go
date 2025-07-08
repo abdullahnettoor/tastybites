@@ -100,3 +100,12 @@ func (r *repository) GetAllTables(ctx context.Context) ([]models.Table, error) {
 	}
 	return tables, nil
 }
+
+func (r *repository) ResetTableToAvailable(ctx context.Context, tableId int) error {
+	query := `UPDATE public.tables SET status = $1, booked_by = NULL WHERE id = $2`
+	_, err := r.DB.ExecContext(ctx, query, models.TableStatusAvailable, tableId)
+	if err != nil {
+		return fmt.Errorf("failed to reset table to available: %w", err)
+	}
+	return nil
+}

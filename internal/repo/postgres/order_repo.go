@@ -205,3 +205,12 @@ func (r *repository) UpdateOrder(ctx context.Context, order models.Order) error 
 func (r *repository) DeleteOrder(ctx context.Context, id int) error {
 	return fmt.Errorf("not implemented")
 }
+
+func (r *repository) UpdateOrderStatusByTableId(ctx context.Context, tableId int, status models.OrderStatus) error {
+	query := `UPDATE public.orders SET status = $1 WHERE table_id = $2 AND status = 'pending'`
+	_, err := r.DB.ExecContext(ctx, query, status, tableId)
+	if err != nil {
+		return fmt.Errorf("failed to update order status by table ID: %w", err)
+	}
+	return nil
+}

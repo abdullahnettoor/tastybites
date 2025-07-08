@@ -15,12 +15,14 @@ import (
 type orderHandler struct {
 	OrderUsecase usecases.OrderIUsecase
 	UserUsecase  usecases.UserIUsecase
+	TableUsecase usecases.TableIUsecase
 }
 
-func NewOrderHandler(orderUsecase usecases.OrderIUsecase, userUsecase usecases.UserIUsecase) *orderHandler {
+func NewOrderHandler(orderUsecase usecases.OrderIUsecase, userUsecase usecases.UserIUsecase, tableUsecase usecases.TableIUsecase) *orderHandler {
 	return &orderHandler{
 		OrderUsecase: orderUsecase,
 		UserUsecase:  userUsecase,
+		TableUsecase: tableUsecase,
 	}
 }
 
@@ -73,6 +75,17 @@ func (h *orderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if table is available before creating order
+	isAvailable, err := h.TableUsecase.IsTableAvailable(r.Context(), orderReq.TableID)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "Failed to check table availability")
+		return
+	}
+	if !isAvailable {
+		utils.WriteErrorResponse(w, http.StatusConflict, "Table is already booked or not available")
+		return
+	}
+
 	oItems := make([]models.OrderItem, len(orderReq.Items))
 	for i, item := range orderReq.Items {
 		oItems[i] = models.OrderItem{
@@ -117,4 +130,28 @@ func (h *orderHandler) GetUserOrders(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJSONResponse(w, http.StatusOK, allOrders)
+}
+
+func (h *orderHandler) UpdateTableStatus(w http.ResponseWriter, r *http.Request) {
+	// Extract table ID from URL path
+	tableIdStr := r.PathValue("tableId")
+	if tableIdStr == "" {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, "Table ID is required")
+		return
+	}
+
+	tableId, err := strconv.Atoi(tableIdStr)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, "Invalid table ID format")
+		return
+	}
+
+	// Reset the table status (make available and complete orders)
+	err = h.TableUsecase.ResetTableStatus(r.Context(), tableId)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.WriteSuccessResponse(w, http.StatusOK, "Table status reset successfully", nil)
 }
